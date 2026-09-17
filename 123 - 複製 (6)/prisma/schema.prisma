@@ -1,0 +1,771 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// 作者模型 - 牧者/學者/平信徒
+model Author {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  displayName String?
+  avatar      String?
+  bio         String?
+  title       AuthorTitle @default(LAYPERSON) // 稱謂：牧者/學者/平信徒
+  church      String?
+  denomination String?
+  website     String?
+  socialLinks Json?    // 社交媒體連結 (JSON格式)
+  
+  // 關聯
+  posts       Post[]
+  comments    Comment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("authors")
+}
+
+// 作者稱謂枚舉
+enum AuthorTitle {
+  PASTOR      // 牧者
+  SCHOLAR     // 學者
+  THEOLOGIAN  // 神學家
+  TEACHER     // 教師
+  LAYPERSON   // 平信徒
+  MISSIONARY  // 宣教士
+  ELDER       // 長老
+  DEACON      // 執事
+}
+
+// 分類模型 - 聖經書卷分類
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique // 分類名稱
+  slug        String   @unique // URL友好的標識符
+  description String?
+  testament   Testament // 新約/舊約
+  bookType    BookType  // 書卷類型
+  order       Int       // 排序
+  isActive    Boolean   @default(true)
+  
+  // 關聯
+  posts       Post[]
+  bibleBooks  BibleBook[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("categories")
+}
+
+// 聖約枚舉
+enum Testament {
+  OLD_TESTAMENT // 舊約
+  NEW_TESTAMENT // 新約
+}
+
+// 書卷類型枚舉
+enum BookType {
+  TORAH           // 律法書
+  HISTORY         // 歷史書
+  WISDOM          // 詩歌智慧書
+  MAJOR_PROPHETS  // 大先知書
+  MINOR_PROPHETS  // 小先知書
+  GOSPELS         // 福音書
+  PAULINE         // 保羅書信
+  GENERAL         // 一般書信
+  PROPHECY        // 啟示錄
+}
+
+// 聖經書卷模型
+model BibleBook {
+  id           String    @id @default(cuid())
+  name         String    @unique // 中文名稱
+  englishName  String    @unique // 英文名稱
+  abbreviation String    @unique // 縮寫
+  chapterCount Int       // 章節數
+  testament    Testament
+  bookType     BookType
+  order        Int       // 在聖經中的順序
+  description  String?
+  
+  // 關聯
+  category     Category  @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  posts        Post[]
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  @@map("bible_books")
+}
+
+// 標籤模型 - 神學主題標籤
+model Tag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String?  // 標籤顏色
+  tagType     TagType  @default(THEOLOGY)
+  
+  // 關聯
+  posts       PostTag[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("tags")
+}
+
+// 標籤類型枚舉
+enum TagType {
+  THEOLOGY    // 神學主題
+  DOCTRINE    // 教義
+  PRACTICE    // 實踐
+  BIBLICAL    // 聖經主題
+  DEVOTIONAL  // 靈修
+  SEASONAL    // 節期
+}
+
+// 文章模型
+model Post {
+  id           String      @id @default(cuid())
+  title        String
+  slug         String      @unique
+  content      String      // MDX 內容
+  excerpt      String?     // 摘要
+  coverImage   String?     // 封面圖片
+  
+  // 聖經相關
+  bibleBook    BibleBook?  @relation(fields: [bibleBookId], references: [id])
+  bibleBookId  String?
+  bibleChapter String?     // 相關章節
+  bibleVerse   String?     // 主要經文
+  
+  // 分類與作者
+  category     Category    @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  author       Author      @relation(fields: [authorId], references: [id])
+  authorId     String
+  
+  // 文章屬性
+  difficulty   Difficulty  @default(BEGINNER)
+  readingTime  Int?        // 預估閱讀時間（分鐘）
+  language     String      @default("zh-TW") // 語言
+  
+  // 狀態管理
+  status       PostStatus  @default(DRAFT)
+  publishedAt  DateTime?
+  featured     Boolean     @default(false) // 是否為精選文章
+  
+  // SEO
+  metaTitle    String?
+  metaDescription String?
+  ogImage      String?
+  
+  // 統計數據
+  viewCount    Int         @default(0)
+  likeCount    Int         @default(0)
+  commentCount Int         @default(0)
+  shareCount   Int         @default(0)
+  
+  // 關聯
+  tags         PostTag[]
+  comments     Comment[]
+  likes        PostLike[]
+  bookmarks    PostBookmark[]
+  shares       PostShare[]
+  readingRecords ReadingRecord[]
+  readingListItems ReadingListItem[]
+  userNotes    UserNote[]
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  @@map("posts")
+}
+
+// 文章狀態枚舉
+enum PostStatus {
+  DRAFT       // 草稿
+  PUBLISHED   // 已發布
+  ARCHIVED    // 已歸檔
+  SCHEDULED   // 定時發布
+}
+
+// 難度等級枚舉
+enum Difficulty {
+  BEGINNER     // 初級
+  INTERMEDIATE // 中級
+  ADVANCED     // 高級
+}
+
+// 文章標籤關聯表
+model PostTag {
+  id     String @id @default(cuid())
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId  String
+  
+  @@unique([postId, tagId])
+  @@map("post_tags")
+}
+
+// 用戶模型 (基於NextAuth)
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  
+  // 個人資料
+  displayName   String?
+  username      String?   @unique
+  bio           String?
+  website       String?
+  location      String?
+  
+  // 信仰資料
+  gender        String?
+  ageGroup      String?
+  faithYears    String?
+  church        String?
+  denomination  String?
+  interests     Json?     // 感興趣的領域
+  
+  // 關聯
+  accounts       Account[]
+  sessions       Session[]
+  comments       Comment[]
+  likes          PostLike[]
+  bookmarks      PostBookmark[]
+  shares         PostShare[]
+  readingRecords ReadingRecord[]
+  
+  // 討論版關聯
+  forumTopics        ForumTopic[]
+  forumReplies       ForumReply[]
+  forumModerators    ForumModerator[]
+  forumTopicLikes    ForumTopicLike[]
+  forumReplyLikes    ForumReplyLike[]
+  forumTopicFollows  ForumTopicFollow[]
+  lastRepliedTopics  ForumTopic[] @relation("LastReplyBy")
+  
+  // 個人化功能關聯
+  preferences    UserPreference?
+  readingLists   ReadingList[]
+  userNotes      UserNote[]
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  @@map("users")
+}
+
+// NextAuth Account 模型
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// NextAuth Session 模型
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// NextAuth 驗證令牌模型
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// 評論模型 - 支援三層嵌套
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  
+  // 文章與用戶關聯
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId    String?
+  author    Author?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorId  String?
+  
+  // 訪客評論支援
+  guestName  String?
+  guestEmail String?
+  
+  // 嵌套評論支援
+  parent     Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId   String?
+  replies    Comment[] @relation("CommentReplies")
+  
+  // 審核與狀態
+  status     CommentStatus @default(PENDING)
+  isApproved Boolean       @default(false)
+  isReported Boolean       @default(false)
+  reportCount Int          @default(0)
+  
+  // IP 與瀏覽器資訊
+  ipAddress  String?
+  userAgent  String?
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@map("comments")
+}
+
+// 評論狀態枚舉
+enum CommentStatus {
+  PENDING   // 待審核
+  APPROVED  // 已批准
+  REJECTED  // 已拒絕
+  SPAM      // 垃圾評論
+}
+
+// 文章點讚模型
+model PostLike {
+  id     String @id @default(cuid())
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([postId, userId])
+  @@map("post_likes")
+}
+
+// 文章收藏模型
+model PostBookmark {
+  id     String @id @default(cuid())
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([postId, userId])
+  @@map("post_bookmarks")
+}
+
+// 文章分享模型
+model PostShare {
+  id       String    @id @default(cuid())
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId   String
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId   String?
+  
+  platform SharePlatform
+  
+  createdAt DateTime @default(now())
+  
+  @@map("post_shares")
+}
+
+// 分享平台枚舉
+enum SharePlatform {
+  WHATSAPP
+  FACEBOOK
+  TELEGRAM
+  WECHAT
+  EMAIL
+  COPY_LINK
+}
+
+// 閱讀記錄模型
+model ReadingRecord {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId       String
+  
+  progress     Int      @default(0) // 閱讀進度百分比
+  readingTime  Int      @default(0) // 閱讀時間（秒）
+  lastPosition String?  // 最後閱讀位置
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([userId, postId])
+  @@map("reading_records")
+}
+
+// 敏感詞過濾模型
+model SensitiveWord {
+  id       String @id @default(cuid())
+  word     String @unique
+  category String // 分類：政治、宗教爭議、不當言論等
+  severity Int    @default(1) // 嚴重程度 1-5
+  isActive Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("sensitive_words")
+}
+
+// 網站設定模型
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  String // 設定類型：string, number, boolean, json
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("site_settings")
+}
+
+// 討論區論壇模型
+model Forum {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  color       String?
+  
+  // 分類與排序
+  category    ForumCategory @default(BIBLE_STUDY)
+  order       Int           @default(0)
+  isActive    Boolean       @default(true)
+  isPublic    Boolean       @default(true)
+  
+  // 統計
+  topicsCount   Int @default(0)
+  repliesCount  Int @default(0)
+  
+  // 權限控制
+  canRead     ForumPermission @default(ALL)
+  canPost     ForumPermission @default(REGISTERED)
+  canReply    ForumPermission @default(REGISTERED)
+  
+  // 關聯
+  topics      ForumTopic[]
+  moderators  ForumModerator[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("forums")
+}
+
+// 論壇分類枚舉
+enum ForumCategory {
+  BIBLE_STUDY     // 聖經研讀
+  THEOLOGY        // 神學討論
+  DEVOTIONAL      // 靈修分享
+  PRAYER_REQUEST  // 代禱請求
+  TESTIMONY       // 見證分享
+  GENERAL         // 一般討論
+  ANNOUNCEMENT    // 公告區
+}
+
+// 論壇權限枚舉
+enum ForumPermission {
+  ALL         // 所有人
+  REGISTERED  // 註冊用戶
+  VERIFIED    // 已驗證用戶
+  MODERATOR   // 版主
+  ADMIN       // 管理員
+}
+
+// 討論主題模型
+model ForumTopic {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  content     String
+  
+  // 論壇關聯
+  forum       Forum     @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  forumId     String
+  
+  // 作者
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  
+  // 狀態
+  status      TopicStatus @default(ACTIVE)
+  isPinned    Boolean     @default(false)
+  isLocked    Boolean     @default(false)
+  isFeatured  Boolean     @default(false)
+  
+  // 統計
+  viewCount   Int @default(0)
+  replyCount  Int @default(0)
+  likeCount   Int @default(0)
+  
+  // 最後回覆
+  lastReplyAt    DateTime?
+  lastReplyBy    User?     @relation("LastReplyBy", fields: [lastReplyById], references: [id], onDelete: SetNull)
+  lastReplyById  String?
+  
+  // 關聯
+  replies     ForumReply[]
+  likes       ForumTopicLike[]
+  follows     ForumTopicFollow[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("forum_topics")
+}
+
+// 主題狀態枚舉
+enum TopicStatus {
+  ACTIVE      // 活躍
+  CLOSED      // 已關閉
+  ARCHIVED    // 已歸檔
+  DELETED     // 已刪除
+}
+
+// 論壇回覆模型
+model ForumReply {
+  id          String     @id @default(cuid())
+  content     String
+  
+  // 主題關聯
+  topic       ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId     String
+  
+  // 作者
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  
+  // 嵌套回覆
+  parent      ForumReply? @relation("ReplyToReply", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId    String?
+  replies     ForumReply[] @relation("ReplyToReply")
+  
+  // 狀態與審核
+  status      ReplyStatus @default(ACTIVE)
+  isApproved  Boolean     @default(true)
+  isReported  Boolean     @default(false)
+  reportCount Int         @default(0)
+  
+  // 統計
+  likeCount   Int @default(0)
+  
+  // 關聯
+  likes       ForumReplyLike[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("forum_replies")
+}
+
+// 回覆狀態枚舉
+enum ReplyStatus {
+  ACTIVE      // 活躍
+  HIDDEN      // 已隱藏
+  DELETED     // 已刪除
+  REPORTED    // 已舉報
+}
+
+// 論壇版主模型
+model ForumModerator {
+  id      String @id @default(cuid())
+  forum   Forum  @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  forumId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  
+  permissions Json? // 版主權限設定
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([forumId, userId])
+  @@map("forum_moderators")
+}
+
+// 主題點讚模型
+model ForumTopicLike {
+  id      String     @id @default(cuid())
+  topic   ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId String
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([topicId, userId])
+  @@map("forum_topic_likes")
+}
+
+// 回覆點讚模型
+model ForumReplyLike {
+  id      String     @id @default(cuid())
+  reply   ForumReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  replyId String
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([replyId, userId])
+  @@map("forum_reply_likes")
+}
+
+// 主題關注模型
+model ForumTopicFollow {
+  id      String     @id @default(cuid())
+  topic   ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId String
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  
+  // 通知設定
+  notifyOnReply Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([topicId, userId])
+  @@map("forum_topic_follows")
+}
+
+// 個人化功能：用戶偏好設定
+model UserPreference {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+  
+  // 外觀設定
+  theme          String  @default("system") // light, dark, system
+  fontSize       String  @default("medium") // small, medium, large
+  fontFamily     String  @default("system") // system, serif, sans-serif
+  
+  // 通知設定
+  emailNotifications      Boolean @default(true)
+  pushNotifications       Boolean @default(true)
+  newPostNotifications    Boolean @default(true)
+  replyNotifications      Boolean @default(true)
+  likeNotifications       Boolean @default(false)
+  followNotifications     Boolean @default(true)
+  
+  // 隱私設定
+  profilePublic          Boolean @default(true)
+  showReadingHistory     Boolean @default(true)
+  showBookmarks          Boolean @default(false)
+  
+  // 閱讀偏好
+  defaultCategory        String?
+  preferredDifficulty    Difficulty?
+  autoBookmark           Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("user_preferences")
+}
+
+// 個人化功能：閱讀清單
+model ReadingList {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+  isPublic    Boolean @default(false)
+  color       String?
+  
+  // 用戶關聯
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  
+  // 統計
+  postCount   Int    @default(0)
+  
+  // 關聯
+  items       ReadingListItem[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("reading_lists")
+}
+
+// 閱讀清單項目
+model ReadingListItem {
+  id           String      @id @default(cuid())
+  list         ReadingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  listId       String
+  post         Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId       String
+  
+  order        Int         @default(0)
+  notes        String?     // 個人筆記
+  isCompleted  Boolean     @default(false)
+  
+  createdAt    DateTime    @default(now())
+  
+  @@unique([listId, postId])
+  @@map("reading_list_items")
+}
+
+// 個人化功能：用戶筆記
+model UserNote {
+  id          String @id @default(cuid())
+  title       String?
+  content     String
+  isPrivate   Boolean @default(true)
+  
+  // 關聯
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  post        Post?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String?
+  
+  // 位置信息（如果與文章相關）
+  anchorText  String? // 標註的文字
+  position    String? // 在文章中的位置
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("user_notes")
+}
