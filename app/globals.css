@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  font-size: 20px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 長者友善基礎尺寸：保留各頁原有排版，只提高閱讀與操作門檻。 */
+.senior-ui {
+  font-size: 18px;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+}
+
+.senior-ui button,
+.senior-ui input,
+.senior-ui select,
+.senior-ui textarea {
+  font-size: 1rem;
+}
+
+.senior-ui button,
+.senior-ui select {
+  min-height: 48px;
+}
+
+.senior-ui input,
+.senior-ui textarea {
+  min-height: 52px;
+}
+
+.senior-ui button:focus-visible,
+.senior-ui a:focus-visible,
+.senior-ui input:focus-visible,
+.senior-ui select:focus-visible,
+.senior-ui textarea:focus-visible {
+  outline: 4px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  :root {
+    font-size: 16px;
+  }
+
+  .senior-ui {
+    font-size: 16px;
+  }
+}
