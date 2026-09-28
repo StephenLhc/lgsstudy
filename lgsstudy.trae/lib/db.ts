@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from "@neondatabase/serverless";
 
 // 本機連到 Neon（AWS 新加坡）的網路品質不佳，TCP 連線常要 2～10 秒，
 // 偶爾會持續一兩分鐘連不上。以下錯誤都發生在「建立連線」階段，
@@ -12,7 +12,10 @@ const CONNECT_STAGE_PATTERN =
 const RESPONSE_STAGE_PATTERN =
   /terminating connection|socket hang up|ECONNRESET|UND_ERR_SOCKET/i;
 
-function isTransientDbError(err: unknown): { connectStage: boolean; responseStage: boolean } {
+function isTransientDbError(err: unknown): {
+  connectStage: boolean;
+  responseStage: boolean;
+} {
   const e = err as {
     code?: string;
     message?: string;
@@ -21,7 +24,7 @@ function isTransientDbError(err: unknown): { connectStage: boolean; responseStag
   if (!e) return { connectStage: false, responseStage: false };
   const text = [e.code, e.message, e.cause?.code, e.cause?.message]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
   return {
     connectStage: CONNECT_STAGE_PATTERN.test(text),
     responseStage: RESPONSE_STAGE_PATTERN.test(text),
@@ -40,7 +43,7 @@ interface RetryOptions {
 // 每次重試都建立全新連線，等待時間拉長為 2s、5s、10s、20s、30s，
 // 覆蓋本機網路常見的 1～2 分鐘不穩視窗。SQL 層級錯誤一律不重試。
 // T 預設為列陣列（SELECT／UPDATE RETURNING 的結果），呼叫端可直接 .length、[0] 取用
-export async function withDbRetry<T = Record<string, any>[]>(
+export async function withDbRetry<T = Record<string, unknown>[]>(
   fn: (sql: NeonSql) => Promise<unknown>,
   options: RetryOptions = {},
 ): Promise<T> {
@@ -59,7 +62,9 @@ export async function withDbRetry<T = Record<string, any>[]>(
       const canRetry = connectStage || (retryAfterSent && responseStage);
       if (i === attempts || !canRetry) throw err;
       const wait = delays[Math.min(i - 1, delays.length - 1)];
-      console.warn(`⚠️ 資料庫連線不穩，${wait / 1000} 秒後進行第 ${i + 1} 次嘗試…`);
+      console.warn(
+        `⚠️ 資料庫連線不穩，${wait / 1000} 秒後進行第 ${i + 1} 次嘗試…`,
+      );
       await new Promise((resolve) => setTimeout(resolve, wait));
     }
   }

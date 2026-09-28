@@ -53,16 +53,31 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => null);
     const postId = Number(body?.postId);
-    const userName = String(body?.userName ?? "").trim().slice(0, 50);
-    const salutation = String(body?.salutation ?? "").trim().slice(0, 10);
-    const ageGroup = String(body?.ageGroup ?? "").trim().slice(0, 20);
-    const faithYears = String(body?.faithYears ?? "").trim().slice(0, 20);
-    const churchName = String(body?.churchName ?? "").trim().slice(0, 100);
-    const commentText = String(body?.commentText ?? "").trim().slice(0, 5000);
+    const userName = String(body?.userName ?? "")
+      .trim()
+      .slice(0, 50);
+    const salutation = String(body?.salutation ?? "")
+      .trim()
+      .slice(0, 10);
+    const ageGroup = String(body?.ageGroup ?? "")
+      .trim()
+      .slice(0, 20);
+    const faithYears = String(body?.faithYears ?? "")
+      .trim()
+      .slice(0, 20);
+    const churchName = String(body?.churchName ?? "")
+      .trim()
+      .slice(0, 100);
+    const commentText = String(body?.commentText ?? "")
+      .trim()
+      .slice(0, 5000);
     const isPublic = Boolean(body?.isPublic);
 
     if (!Number.isInteger(postId)) {
-      return NextResponse.json({ error: "缺少有效的文章編號（postId）" }, { status: 400 });
+      return NextResponse.json(
+        { error: "缺少有效的文章編號（postId）" },
+        { status: 400 },
+      );
     }
     if (!userName) {
       return NextResponse.json({ error: "請填寫姓名／暱稱" }, { status: 400 });
@@ -73,11 +88,15 @@ export async function POST(request: Request) {
 
     // 確認文章存在且未刪除（標題供電郵通知使用）
     const target = await withDbRetry(
-      (sql) => sql`SELECT id, title FROM posts WHERE id = ${postId} AND is_deleted = false`,
+      (sql) =>
+        sql`SELECT id, title FROM posts WHERE id = ${postId} AND is_deleted = false`,
       { retryAfterSent: false },
     );
     if (target.length === 0) {
-      return NextResponse.json({ error: "找不到這篇文章，可能已被移除" }, { status: 404 });
+      return NextResponse.json(
+        { error: "找不到這篇文章，可能已被移除" },
+        { status: 404 },
+      );
     }
 
     const inserted = await withDbRetry(
@@ -93,7 +112,8 @@ export async function POST(request: Request) {
     );
 
     // 回應已存妥，回應送出後才寄通知信（失敗只記錄，不影響讀者）
-    const postTitle = target[0].title;
+    const postTitle =
+      typeof target[0].title === "string" ? target[0].title : "";
     const adminUrl = `${new URL(request.url).origin}/admin/comments`;
     after(() =>
       sendNewCommentNotification({
@@ -102,16 +122,23 @@ export async function POST(request: Request) {
         userName,
         salutation,
         ageGroup,
-        faithYears,
+        faithYears: typeof faithYears === "string" ? faithYears : "",
         churchName,
         commentText,
         isPublic,
-        createdAtHk: inserted[0].created_at_hk,
+        createdAtHk:
+          typeof inserted[0].created_at_hk === "string"
+            ? inserted[0].created_at_hk
+            : "",
         adminUrl,
       }),
     );
 
-    return NextResponse.json({ ok: true, id: inserted[0].id, pending: true });
+    return NextResponse.json({
+      ok: true,
+      id: typeof inserted[0].id === "number" ? inserted[0].id : null,
+      pending: true,
+    });
   } catch (error) {
     console.error("❌ 回應寫入失敗:", error);
     return NextResponse.json(

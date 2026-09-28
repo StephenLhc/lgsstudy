@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 // 作者後台簡易密碼保護：可用 .env.local 的 ADMIN_PASSWORD 覆蓋，未設定時預設 1234567
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "1234567";
@@ -13,6 +13,14 @@ function sha256(text: string): string {
 // 登入成功後寫入 cookie 的權杖（密碼的雜湊值，不存放明碼）
 export function getAdminToken(): string {
   return sha256(`lgsstudy-admin-token:${ADMIN_PASSWORD}`);
+}
+
+// 帳戶登入使用帶使用者名稱的簽名 token；驗證時不需要每個 API 再查資料庫。
+export function getUserToken(username: string): string {
+  const signature = createHmac("sha256", ADMIN_PASSWORD)
+    .update(`lgsstudy-user-session:${username}`)
+    .digest("hex");
+  return `${username}.${signature}`;
 }
 
 // 常數時間比對，避免計時攻擊
@@ -30,8 +38,22 @@ export function isAdminRequest(request: Request): boolean {
     .split(";")
     .map((part) => part.trim())
     .find((part) => part.startsWith(`${ADMIN_COOKIE}=`));
-  const token = pair ? decodeURIComponent(pair.slice(ADMIN_COOKIE.length + 1)) : undefined;
+  const token = pair
+    ? decodeURIComponent(pair.slice(ADMIN_COOKIE.length + 1))
+    : undefined;
   if (!token) return false;
+
+  const separator = token.indexOf(".");
+  if (separator > 0) {
+    const username = token.slice(0, separator);
+    const signature = token.slice(separator + 1);
+    const expectedSignature = getUserToken(username).slice(username.length + 1);
+    const expected = Buffer.from(expectedSignature, "hex");
+    const actual = Buffer.from(signature, "hex");
+    return (
+      actual.length === expected.length && timingSafeEqual(actual, expected)
+    );
+  }
 
   const expected = Buffer.from(getAdminToken(), "hex");
   let actual: Buffer;

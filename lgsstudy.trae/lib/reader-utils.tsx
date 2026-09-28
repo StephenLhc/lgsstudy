@@ -1,6 +1,50 @@
 import type { ReactNode } from 'react';
 import { bibleUrl } from '@/lib/bible';
 
+const DATE_YEARS = Array.from({ length: 31 }, (_, index) => 2010 + index);
+const DATE_MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
+const DATE_DAYS = Array.from({ length: 31 }, (_, index) => index + 1);
+
+interface ChineseDateFilterProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export function ChineseDateFilter({ value, onChange }: ChineseDateFilterProps) {
+  const [year = '', month = '', day = ''] = value.split('-');
+
+  const updateDate = (part: 'year' | 'month' | 'day', nextValue: string) => {
+    const next = {
+      year,
+      month,
+      day,
+      [part]: nextValue,
+    };
+    onChange(next.year && next.month && next.day
+      ? `${next.year}-${next.month.padStart(2, '0')}-${next.day.padStart(2, '0')}`
+      : '');
+  };
+
+  const selectClassName = 'flex-1 min-w-0 p-2.5 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-base sm:text-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-emerald-600 dark:focus:border-emerald-500';
+
+  return (
+    <div className="flex gap-2" aria-label="搜尋指定日期，年、月、日">
+      <select value={year} onChange={(event) => updateDate('year', event.target.value)} className={selectClassName} aria-label="年份">
+        <option value="">年份</option>
+        {DATE_YEARS.map((option) => <option key={option} value={option}>{option} 年</option>)}
+      </select>
+      <select value={month} onChange={(event) => updateDate('month', event.target.value)} className={selectClassName} aria-label="月份">
+        <option value="">月份</option>
+        {DATE_MONTHS.map((option) => <option key={option} value={option}>{option} 月</option>)}
+      </select>
+      <select value={day} onChange={(event) => updateDate('day', event.target.value)} className={selectClassName} aria-label="日期">
+        <option value="">日期</option>
+        {DATE_DAYS.map((option) => <option key={option} value={option}>{option} 日</option>)}
+      </select>
+    </div>
+  );
+}
+
 // 回應時間只顯示到日：2026-09-16
 export function formatCommentDate(iso: string): string {
   const d = new Date(iso);

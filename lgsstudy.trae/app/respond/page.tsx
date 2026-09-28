@@ -37,10 +37,10 @@ function readResponseDraft(): ResponseDraft | null {
     } catch { return null; }
 }
 function writeResponseDraft(d: ResponseDraft): void {
-    try { localStorage.setItem(RESPONSE_DRAFT_KEY, JSON.stringify(d)); } catch {}
+    try { localStorage.setItem(RESPONSE_DRAFT_KEY, JSON.stringify(d)); } catch { }
 }
 function clearResponseDraft(): void {
-    try { localStorage.removeItem(RESPONSE_DRAFT_KEY); } catch {}
+    try { localStorage.removeItem(RESPONSE_DRAFT_KEY); } catch { }
 }
 // 指紋：用於比對內容是否真的改變，避免重複寫 localStorage
 function fpOf(postId: number | '', text: string): string {
@@ -83,7 +83,9 @@ function RespondPageInner() {
     const [showConsentModal, setShowConsentModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false); // 自訂成功提示框
     const [submitting, setSubmitting] = useState(false);
-    submittingRef.current = submitting;
+    useEffect(() => {
+        submittingRef.current = submitting;
+    }, [submitting]);
     const [submitError, setSubmitError] = useState('');
     // 曾在本裝置登記過的回應者：免重填登記表，並沿用上次的公開設定
     const [isReturning, setIsReturning] = useState(false);
@@ -152,7 +154,7 @@ function RespondPageInner() {
                 // 先把草稿的指紋記下，防止第一層 debounce 在 commentText 尚未還原前
                 // 把空內容寫入 localStorage 覆蓋了這份草稿
                 lastSavedFpRef.current = fpOf(draft.postId, draft.commentText);
-                setPendingDraft(draft);
+                queueMicrotask(() => setPendingDraft(draft));
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -243,7 +245,7 @@ function RespondPageInner() {
                         savedAt: Date.now(),
                     });
                 }
-            } catch {}
+            } catch { }
         };
         window.addEventListener('beforeunload', flush);
         window.addEventListener('pagehide', flush);
@@ -446,22 +448,22 @@ function RespondPageInner() {
                             <h1 className="text-3xl font-bold text-slate-900 mt-2">{selectedPost.title}</h1>
                             <p className="text-xl text-amber-800 font-medium mt-2 bg-amber-50 p-2 rounded-lg border border-amber-200 inline-block">
                                 經文：{(selectedPost.scripture || '').split('；').map((s, i, arr) => {
-                                  const part = s.trim();
-                                  if (!part) return null;
-                                  return (
-                                    <span key={i}>
-                                      {i > 0 && '；'}
-                                      <a
-                                        href={bibleUrl(part)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="underline hover:text-amber-600 hover:decoration-amber-700"
-                                        title={`到香港聖經公會 RCUV 查看：${part}`}
-                                      >
-                                        {part}
-                                      </a>
-                                    </span>
-                                  );
+                                    const part = s.trim();
+                                    if (!part) return null;
+                                    return (
+                                        <span key={i}>
+                                            {i > 0 && '；'}
+                                            <a
+                                                href={bibleUrl(part)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="underline hover:text-amber-600 hover:decoration-amber-700"
+                                                title={`到香港聖經公會 RCUV 查看：${part}`}
+                                            >
+                                                {part}
+                                            </a>
+                                        </span>
+                                    );
                                 })}
                             </p>
                         </div>
@@ -502,9 +504,8 @@ function RespondPageInner() {
                             />
                             {/* 自動儲存狀態列 */}
                             {draftStatus !== 'idle' && commentText.trim() && (
-                                <p className={`text-sm mt-1 ${
-                                    draftStatus === 'saved' ? 'text-emerald-600' : 'text-amber-600'
-                                }`}>
+                                <p className={`text-sm mt-1 ${draftStatus === 'saved' ? 'text-emerald-600' : 'text-amber-600'
+                                    }`}>
                                     {draftStatus === 'saved'
                                         ? `✓ 已自動儲存${draftSavedAt ? '（' + new Date(draftSavedAt).toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' }) + '）' : ''}`
                                         : '● 寫入中…'}
@@ -602,7 +603,7 @@ function RespondPageInner() {
                                 : pendingDraft.commentText}
                         </p>
                         <p className="text-xs text-gray-400 mb-6">
-                            上次自動儲存：{new Date(pendingDraft.savedAt || Date.now()).toLocaleString('zh-HK')}
+                            上次自動儲存：{pendingDraft.savedAt ? new Date(pendingDraft.savedAt).toLocaleString('zh-HK') : '時間未知'}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <button

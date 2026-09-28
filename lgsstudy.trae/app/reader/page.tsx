@@ -3,9 +3,9 @@
 import ReactMarkdown from 'react-markdown';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { Heart, ThumbsDown, MessageSquare, Search, Filter, Calendar, Tag, Loader2, Sun, Moon, Eye, LayoutDashboard, LogIn, Share2, Link2, Check, ChevronLeft, ChevronRight, Clock, CornerDownRight, Pin, Sparkles, Flame, Bookmark } from 'lucide-react';
-import { formatCommentDate, estimateReadingTime, renderScripture, splitCategories } from '@/lib/reader-utils';
-import { useReaderPage } from '@/hooks/useReaderPage';
+import { Heart, ThumbsDown, MessageSquare, Search, Filter, Calendar, Tag, Loader2, Sun, Moon, Eye, UserRound, Share2, Link2, Check, ChevronLeft, ChevronRight, Clock, CornerDownRight, Pin, Sparkles, Flame, Bookmark } from 'lucide-react';
+import { ChineseDateFilter, formatCommentDate, estimateReadingTime, renderScripture, splitCategories } from '@/lib/reader-utils';
+import { useReaderPage, type SortBy } from '@/hooks/useReaderPage';
 
 export default function ReaderPage() {
     const router = useRouter();
@@ -42,48 +42,48 @@ export default function ReaderPage() {
     }
 
     return (
-        <main className="min-h-screen bg-[#FDFBF7] dark:bg-slate-950 text-[#222222] dark:text-slate-100 font-sans p-4 md:p-8 max-w-7xl mx-auto transition-colors">
+        <main className="min-h-screen bg-[#FDFBF7] dark:bg-slate-950 text-[#222222] dark:text-slate-100 font-sans p-4 md:p-6 max-w-[1440px] mx-auto transition-colors">
 
             {/* 頂部 Header：Logo — 標題 — 登入按鈕，標題在兩者之間置中 */}
-                <header className="mb-6 md:mb-8 border-b-2 border-emerald-700 dark:border-emerald-600 pb-4 flex flex-row items-center gap-2 sm:gap-3">
-                    {/* 左上角：網站 Logo */}
-                    <div className="flex items-center shrink-0">
-                        {mounted && (
-                            <img
-                                src={theme === 'dark' ? '/images/lgsDark.png' : '/images/lgsLight.png'}
-                                alt="樂研集 lgscns"
-                                className="h-9 sm:h-12 w-auto rounded-lg border border-emerald-800/15 dark:border-slate-700 shrink-0"
-                            />
-                        )}
-                    </div>
+            <header className="mb-6 md:mb-8 border-b-2 border-emerald-700 dark:border-emerald-600 pb-4 flex flex-row items-center gap-2 sm:gap-3">
+                {/* 左上角：網站 Logo */}
+                <div className="flex items-center shrink-0">
+                    {mounted && (
+                        <img
+                            src={theme === 'dark' ? '/images/lgsDark.png' : '/images/lgsLight.png'}
+                            alt="樂研集 lgscns"
+                            className="h-9 sm:h-12 w-auto rounded-lg border border-emerald-800/15 dark:border-slate-700 shrink-0"
+                        />
+                    )}
+                </div>
 
-                    {/* 網站名稱：在 Logo 與按鈕之間，佔滿剩餘空間並置中 */}
-                    <h1 className="flex-1 text-base min-[400px]:text-lg sm:text-2xl lg:text-3xl md:text-4xl font-bold text-emerald-900 dark:text-emerald-400 truncate text-center">
-                        讀經分享和心得
-                    </h1>
+                {/* 網站名稱：在 Logo 與按鈕之間，佔滿剩餘空間並置中 */}
+                <h1 className="flex-1 text-base min-[400px]:text-lg sm:text-2xl lg:text-3xl md:text-4xl font-bold text-emerald-900 dark:text-emerald-400 truncate text-center">
+                    讀經分享和心得
+                </h1>
 
                 {/* 右上角：後台入口（未登入＝作者登入，已登入＝作者後台）＋主題切換按鈕 */}
                 {mounted && (
                     <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         {isAdmin ? (
                             <button
-                                onClick={() => router.push('/admin')}
+                                onClick={() => router.push('/admin?from=%2Freader')}
                                 title="返回作者後台"
                                 aria-label="返回作者後台"
                                 className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs sm:text-base hover:bg-emerald-800 transition shadow-sm border border-emerald-800 dark:border-emerald-500"
                             >
-                                <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" />
-                                <span>登入</span>
+                                <UserRound className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <span>註冊/ 登入</span>
                             </button>
                         ) : (
                             <button
-                                onClick={() => router.push('/admin')}
+                                onClick={() => router.push('/admin?from=%2Freader')}
                                 title="登入作者後台"
                                 aria-label="登入作者後台"
                                 className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs sm:text-base hover:bg-emerald-800 transition shadow-sm border border-emerald-800 dark:border-emerald-500"
                             >
-                                <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
-                                <span>登入</span>
+                                <UserRound className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <span>註冊/ 登入</span>
                             </button>
                         )}
                         <button
@@ -147,7 +147,7 @@ export default function ReaderPage() {
                                 <img
                                     src={selectedPost.image_url}
                                     alt={selectedPost.title}
-                                    className="w-full max-h-[420px] object-cover rounded-2xl shadow-md border border-gray-200 dark:border-slate-700"
+                                    className="w-full h-auto object-contain rounded-2xl shadow-md border border-gray-200 dark:border-slate-700"
                                 />
                             </div>
                         )}
@@ -186,18 +186,16 @@ export default function ReaderPage() {
                             onClick={() => toggleBookmark(selectedPost.id)}
                             aria-pressed={bookmarks.includes(selectedPost.id)}
                             title={bookmarks.includes(selectedPost.id) ? '已收藏，再按一次取消' : '收藏這篇，方便日後重看'}
-                            className={`flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl transition ${
-                                bookmarks.includes(selectedPost.id)
-                                    ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 ring-2 ring-amber-400 dark:ring-amber-500'
-                                    : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
-                            }`}
+                            className={`flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl transition ${bookmarks.includes(selectedPost.id)
+                                ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 ring-2 ring-amber-400 dark:ring-amber-500'
+                                : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
+                                }`}
                         >
                             <Bookmark
-                                className={`w-6 h-6 sm:w-8 sm:h-8 ${
-                                    bookmarks.includes(selectedPost.id)
-                                        ? 'fill-amber-500 text-amber-600 dark:text-amber-400'
-                                        : 'fill-amber-100 dark:fill-amber-950'
-                                }`}
+                                className={`w-6 h-6 sm:w-8 sm:h-8 ${bookmarks.includes(selectedPost.id)
+                                    ? 'fill-amber-500 text-amber-600 dark:text-amber-400'
+                                    : 'fill-amber-100 dark:fill-amber-950'
+                                    }`}
                             />
                             <span className="text-xs sm:text-lg font-bold">
                                 {bookmarks.includes(selectedPost.id) ? '已收藏' : '收藏'}
@@ -208,18 +206,16 @@ export default function ReaderPage() {
                             onClick={() => toggleReaction('like')}
                             aria-pressed={votes[selectedPost.id]?.liked ?? false}
                             title={votes[selectedPost.id]?.liked ? '再按一次取消讚' : '我覺得這篇很得益處'}
-                            className={`flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl transition ${
-                                votes[selectedPost.id]?.liked
-                                    ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 ring-2 ring-rose-400 dark:ring-rose-500'
-                                    : 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
-                            }`}
+                            className={`flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl transition ${votes[selectedPost.id]?.liked
+                                ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 ring-2 ring-rose-400 dark:ring-rose-500'
+                                : 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
+                                }`}
                         >
                             <Heart
-                                className={`w-6 h-6 sm:w-8 sm:h-8 stroke-rose-600 dark:stroke-rose-400 ${
-                                    votes[selectedPost.id]?.liked
-                                        ? 'fill-rose-500 dark:fill-rose-500'
-                                        : 'fill-rose-100 dark:fill-rose-950'
-                                }`}
+                                className={`w-6 h-6 sm:w-8 sm:h-8 stroke-rose-600 dark:stroke-rose-400 ${votes[selectedPost.id]?.liked
+                                    ? 'fill-rose-500 dark:fill-rose-500'
+                                    : 'fill-rose-100 dark:fill-rose-950'
+                                    }`}
                             />
                             <span className="text-xs sm:text-lg font-bold">{selectedPost.like_count || 0} 讚</span>
                         </button>
@@ -228,23 +224,22 @@ export default function ReaderPage() {
                             onClick={() => toggleReaction('dislike')}
                             aria-pressed={votes[selectedPost.id]?.disliked ?? false}
                             title={votes[selectedPost.id]?.disliked ? '再按一次取消「有待改善」' : '我覺得這篇有待改善'}
-                            className={`flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl transition ${
-                                votes[selectedPost.id]?.disliked
-                                    ? 'bg-gray-300 dark:bg-slate-700 text-gray-800 dark:text-slate-200 ring-2 ring-gray-500 dark:ring-slate-400'
-                                    : 'text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700'
-                            }`}
+                            className={`flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl transition ${votes[selectedPost.id]?.disliked
+                                ? 'bg-gray-300 dark:bg-slate-700 text-gray-800 dark:text-slate-200 ring-2 ring-gray-500 dark:ring-slate-400'
+                                : 'text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                }`}
                         >
                             <ThumbsDown className="w-6 h-6 sm:w-8 sm:h-8" />
                             <span className="text-xs sm:text-lg font-bold">{selectedPost.dislike_count || 0} 有待改善</span>
                         </button>
 
-                        <button
-                            onClick={() => router.push(`/respond?postId=${selectedPost.id}`)}
-                            className="flex flex-col items-center gap-1 text-blue-700 dark:text-blue-400 hover:scale-105 transition p-2 sm:p-3 px-3 sm:px-6 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800"
+                        <div
+                            aria-label={`回應數 ${selectedPost.comment_count || 0}`}
+                            className="flex flex-col items-center gap-1 text-blue-700 dark:text-blue-400 p-2 sm:p-3 px-3 sm:px-6"
                         >
                             <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8" />
                             <span className="text-xs sm:text-lg font-bold">回應 ({selectedPost.comment_count || 0})</span>
-                        </button>
+                        </div>
                     </div>
 
                     {/* 分享列：WhatsApp 教會群組分享 ／ 複製連結 */}
@@ -264,11 +259,10 @@ export default function ReaderPage() {
                         <button
                             onClick={copyShareLink}
                             title="複製文章連結，可貼到任何地方"
-                            className={`flex items-center gap-1.5 sm:gap-2 font-bold text-sm sm:text-base px-3 sm:px-5 py-2 rounded-full border shadow-sm transition hover:scale-105 ${
-                                linkCopied
-                                    ? 'bg-emerald-600 border-emerald-600 text-white'
-                                    : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700'
-                            }`}
+                            className={`flex items-center gap-1.5 sm:gap-2 font-bold text-sm sm:text-base px-3 sm:px-5 py-2 rounded-full border shadow-sm transition hover:scale-105 ${linkCopied
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700'
+                                }`}
                         >
                             {linkCopied ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <Link2 className="w-4 h-4 sm:w-5 sm:h-5" />}
                             {linkCopied ? '已複製連結！' : '複製連結'}
@@ -448,7 +442,7 @@ export default function ReaderPage() {
                 <aside className="lg:col-span-5 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl shadow-md border border-gray-200 dark:border-slate-800 transition-colors">
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4 pb-2 border-b dark:border-slate-800 flex items-center gap-2">
                         <Search className="w-6 h-6 text-emerald-700 dark:text-emerald-400" />
-                        歷史靈修搜尋
+                        歷史文章搜尋
                     </h2>
 
                     {/* 🔍 搜尋與篩選控制區 */}
@@ -459,13 +453,12 @@ export default function ReaderPage() {
                             onClick={() => setShowBookmarksOnly((v) => !v)}
                             disabled={bookmarks.length === 0 && !showBookmarksOnly}
                             aria-pressed={showBookmarksOnly}
-                            className={`w-full flex items-center justify-center gap-2 p-2.5 sm:p-3 rounded-xl font-bold text-base sm:text-lg border-2 transition ${
-                                showBookmarksOnly
-                                    ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
-                                    : bookmarks.length === 0
-                                        ? 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed'
-                                        : 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40'
-                            }`}
+                            className={`w-full flex items-center justify-center gap-2 p-2.5 sm:p-3 rounded-xl font-bold text-base sm:text-lg border-2 transition ${showBookmarksOnly
+                                ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
+                                : bookmarks.length === 0
+                                    ? 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed'
+                                    : 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40'
+                                }`}
                             title={bookmarks.length === 0 ? '按下文章上的「收藏」後，就能在這裡快速找回' : '只顯示你在本機收藏的文章'}
                         >
                             <Bookmark className={`w-5 h-5 ${showBookmarksOnly ? 'fill-white' : bookmarks.length > 0 ? 'fill-amber-300' : ''}`} />
@@ -511,7 +504,7 @@ export default function ReaderPage() {
                             </label>
                             <select
                                 value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value as any)}
+                                onChange={(e) => setSortBy(e.target.value as SortBy)}
                                 className="w-full p-2 sm:p-3 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-base sm:text-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-emerald-600 dark:focus:border-emerald-500 font-medium"
                             >
                                 <option value="date">按發布日期 (最新在前)</option>
@@ -525,15 +518,10 @@ export default function ReaderPage() {
                         <div>
                             <label className="block text-gray-700 dark:text-slate-300 font-bold mb-1.5 text-base sm:text-lg flex items-center gap-1">
                                 <Calendar className="w-5 h-5 text-amber-800 dark:text-amber-400" />
-                                按指定日期搜尋：
+                                搜尋指定日期：
                             </label>
                             <div className="flex gap-2">
-                                <input
-                                    type="date"
-                                    value={selectedDate}
-                                    onChange={(e) => setSelectedDate(e.target.value)}
-                                    className="w-full p-2 sm:p-2.5 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-base sm:text-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                                />
+                                <ChineseDateFilter value={selectedDate} onChange={setSelectedDate} />
                                 {selectedDate && (
                                     <button
                                         onClick={() => setSelectedDate('')}
@@ -543,6 +531,9 @@ export default function ReaderPage() {
                                     </button>
                                 )}
                             </div>
+                            <p className="mt-1.5 text-sm sm:text-base text-gray-500 dark:text-slate-400">
+                                請選擇年份、月份和日期
+                            </p>
                         </div>
 
                     </div>
@@ -559,9 +550,9 @@ export default function ReaderPage() {
                                     const rank = idx + 1;
                                     const rankColor =
                                         rank === 1 ? 'bg-amber-500 text-white' :
-                                        rank === 2 ? 'bg-slate-400 text-white' :
-                                        rank === 3 ? 'bg-orange-700 text-white' :
-                                        'bg-gray-300 dark:bg-slate-600 text-gray-700 dark:text-slate-200';
+                                            rank === 2 ? 'bg-slate-400 text-white' :
+                                                rank === 3 ? 'bg-orange-700 text-white' :
+                                                    'bg-gray-300 dark:bg-slate-600 text-gray-700 dark:text-slate-200';
                                     const isSelected = p.id === selectedPost?.id;
                                     return (
                                         <li key={p.id}>
@@ -593,7 +584,7 @@ export default function ReaderPage() {
                     <div className="mb-6 text-center">
                         <a href="/feed.xml" className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-700 dark:text-orange-300 hover:underline">
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M4 11a9 9 0 0 1 9 9h-2.5A6.5 6.5 0 0 0 4 13.5V11zm0-5a14 14 0 0 1 14 14h-2.5A11.5 11.5 0 0 0 4 8.5V6zm1.5 11.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/>
+                                <path d="M4 11a9 9 0 0 1 9 9h-2.5A6.5 6.5 0 0 0 4 13.5V11zm0-5a14 14 0 0 1 14 14h-2.5A11.5 11.5 0 0 0 4 8.5V6zm1.5 11.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
                             </svg>
                             以 RSS 閱讀器訂閱新文章
                         </a>
@@ -635,12 +626,12 @@ export default function ReaderPage() {
                                                 </span>
                                             </span>
                                             <span className="flex gap-1 flex-wrap">
-                        {splitCategories(p.category).map((c) => (
-                            <span key={c} className="text-xs bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800">
-                                {c}
-                            </span>
-                        ))}
-                    </span>
+                                                {splitCategories(p.category).map((c) => (
+                                                    <span key={c} className="text-xs bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800">
+                                                        {c}
+                                                    </span>
+                                                ))}
+                                            </span>
                                         </div>
 
                                         <h3 className={`text-lg sm:text-xl font-bold mt-1.5 ${isSelected ? 'text-emerald-900 dark:text-emerald-300' : 'text-gray-800 dark:text-slate-200'}`}>

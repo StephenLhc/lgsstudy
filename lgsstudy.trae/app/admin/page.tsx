@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  BookOpen,
+  UserRound,
   Lock,
+  Mail,
+  Camera,
   LogOut,
   Loader2,
   Pencil,
@@ -17,16 +19,31 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-// 作者後台入口：先輸入密碼，登入後顯示「寫新文章 / 讀者板面」兩選一選單
-export default function AdminHomePage() {
+function AdminHomeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedFrom = searchParams.get('from') || '/';
+  const from = requestedFrom.startsWith('/') && !requestedFrom.startsWith('//') ? requestedFrom : '/';
 
-  // checking：開啟時檢查 cookie；login：密碼閘；menu：兩選一選單
+  // checking：開啟時檢查 cookie；login：註冊／登入分頁；menu：後台選單
   const [phase, setPhase] = useState<'checking' | 'login' | 'menu'>('checking');
+  const [authTab, setAuthTab] = useState<'register' | 'login'>('register');
 
+  const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [loginMessage, setLoginMessage] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
+  const [registerForm, setRegisterForm] = useState({
+    username: '',
+    displayName: '',
+    email: '',
+    masterPassword: '',
+  });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [registerError, setRegisterError] = useState('');
+  const [registerMessage, setRegisterMessage] = useState('');
+  const [registering, setRegistering] = useState(false);
 
   // 回收站內已刪文章數量，用於選單卡片上的徽章
   const [deletedCount, setDeletedCount] = useState<number | null>(null);
@@ -83,14 +100,18 @@ export default function AdminHomePage() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: passwordInput }),
+        body: JSON.stringify(passwordInput ? { password: passwordInput } : { email: emailInput }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setLoginError(data.error || '登入失敗，請再試一次');
+        setLoginError(data.error || '登入連結寄送失敗，請再試一次');
         return;
       }
-      setPhase('menu');
+      if (data.ok) {
+        setPhase('menu');
+      } else {
+        setLoginMessage(data.message || '登入連結已寄出，請查看你的電郵');
+      }
     } catch {
       setLoginError('網路連線失敗，請再試一次');
     } finally {
@@ -98,12 +119,36 @@ export default function AdminHomePage() {
     }
   };
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegisterError('');
+    setRegisterMessage('');
+    setRegistering(true);
+    try {
+      const form = new FormData();
+      Object.entries(registerForm).forEach(([key, value]) => form.append(key, value));
+      if (avatarFile) form.append('avatar', avatarFile);
+      const res = await fetch('/api/admin/register', { method: 'POST', body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRegisterError(data.error || '建立帳戶失敗，請再試一次');
+        return;
+      }
+      setRegisterMessage(data.message || '使用者建立成功，現在可以登入');
+      setRegisterForm({ username: '', displayName: '', email: '', masterPassword: '' });
+      setAvatarFile(null);
+    } catch {
+      setRegisterError('網路連線失敗，請再試一次');
+    } finally {
+      setRegistering(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await fetch('/api/admin/logout', { method: 'POST' });
     } finally {
-      setPasswordInput('');
-      setPhase('login');
+      router.push(from); // 👈 登出後跳轉至來源頁面
     }
   };
 
@@ -119,48 +164,70 @@ export default function AdminHomePage() {
     );
   }
 
-  // 登入密碼閘
+  // 註冊與登入共用同一個分頁畫面
   if (phase === 'login') {
     return (
       <div className="min-h-screen bg-[#FDFBF7] dark:bg-slate-950 flex items-center justify-center p-4 transition-colors">
-        <form
-          onSubmit={handleLogin}
-          className="w-full max-w-md bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-slate-800"
-        >
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-slate-800">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <BookOpen className="w-8 h-8 text-emerald-700 dark:text-emerald-400" />
-            <h1 className="text-2xl font-bold text-emerald-900 dark:text-emerald-300">作者後台</h1>
+            <UserRound className="w-8 h-8 text-emerald-700 dark:text-emerald-400" />
+            <h1 className="text-2xl font-bold text-emerald-900 dark:text-emerald-300">註冊/ 登入</h1>
           </div>
           <p className="text-center text-gray-500 dark:text-slate-400 mb-6">
             讀經分享和心得 · 寫文與發布專區
           </p>
-
-          <label className="block text-gray-700 dark:text-slate-300 font-bold mb-2">
-            請輸入後台密碼
-          </label>
-          <div className="relative">
-            <Lock className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="password"
-              value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
-              placeholder="密碼"
-              autoFocus
-              className="w-full p-3 pl-10 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-lg outline-none focus:border-emerald-600 dark:focus:border-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-            />
+          <div className="grid grid-cols-2 gap-2 mb-6 p-1 rounded-xl bg-emerald-50 dark:bg-slate-800">
+            <button type="button" onClick={() => setAuthTab('register')} className={`py-2.5 rounded-lg font-bold transition ${authTab === 'register' ? 'bg-emerald-700 text-white shadow-sm' : 'text-emerald-800 dark:text-emerald-300'}`}>註冊</button>
+            <button type="button" onClick={() => setAuthTab('login')} className={`py-2.5 rounded-lg font-bold transition ${authTab === 'login' ? 'bg-emerald-700 text-white shadow-sm' : 'text-emerald-800 dark:text-emerald-300'}`}>登入</button>
           </div>
 
-          {loginError && <p className="text-red-600 font-bold mt-3 text-sm">{loginError}</p>}
-
-          <button
-            type="submit"
-            disabled={loggingIn || !passwordInput}
-            className="w-full mt-6 bg-emerald-700 text-white py-3 rounded-xl text-xl font-bold hover:bg-emerald-800 transition shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-            登入
-          </button>
-        </form>
+          {authTab === 'register' ? (
+            <form onSubmit={handleRegister} className="grid gap-3">
+              <p className="text-sm text-gray-500 dark:text-slate-400">可用中文、英文字母大小階或數字</p>
+              <label className="font-bold text-gray-700 dark:text-slate-300">你的名字
+                <input required minLength={2} maxLength={24} value={registerForm.username} onChange={(e) => setRegisterForm((previous) => ({ ...previous, username: e.target.value, displayName: e.target.value }))} placeholder="陳大文" className="mt-1 w-full p-3 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" />
+              </label>
+              <label className="font-bold text-gray-700 dark:text-slate-300">顯示名稱（可修改的）<span className="ml-2 text-sm font-normal text-gray-500 dark:text-slate-400">可用中文、英文字母大小階或數字，要容易記</span>
+                <input required value={registerForm.displayName} onChange={(e) => setRegisterForm({ ...registerForm, displayName: e.target.value })} placeholder="陳大文" className="mt-1 w-full p-3 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" />
+              </label>
+              <label className="font-bold text-gray-700 dark:text-slate-300">Google 或 Yahoo 電郵
+                <span className="relative block mt-1"><Mail className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input required type="email" value={registerForm.email} onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })} placeholder="your@gmail.com" className="w-full p-3 pl-10 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" /></span>
+              </label>
+              <label className="font-bold text-gray-700 dark:text-slate-300">頭像（可不填）
+                <span className="relative block mt-1"><Camera className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} className="w-full p-2.5 pl-10 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" /></span>
+              </label>
+              <label className="font-bold text-gray-700 dark:text-slate-300">現有後台密碼（確認身份，註冊時需要）
+                <input required type="password" value={registerForm.masterPassword} onChange={(e) => setRegisterForm({ ...registerForm, masterPassword: e.target.value })} placeholder="請輸入現有後台密碼" className="mt-1 w-full p-3 border-2 border-orange-300 dark:border-orange-700 rounded-xl text-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" />
+              </label>
+              {registerError && <p className="text-red-600 font-bold mt-3 text-sm">{registerError}</p>}
+              {registerMessage && <p className="text-emerald-700 dark:text-emerald-300 font-bold mt-3 text-sm">✅ {registerMessage}</p>}
+              <button type="submit" disabled={registering} className="w-full mt-5 bg-emerald-700 text-white py-3 rounded-xl text-xl font-bold hover:bg-emerald-800 transition shadow-md disabled:opacity-50 flex items-center justify-center gap-2">
+                {registering && <Loader2 className="w-5 h-5 animate-spin" />}
+                建立使用者
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleLogin} autoComplete="off">
+              <label className="block text-gray-700 dark:text-slate-300 font-bold mb-2">Google 或 Yahoo 電郵</label>
+              <div className="relative">
+                <Mail className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input type="email" name="login-email-address" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} onFocus={(e) => { if (!emailInput && e.currentTarget.value) e.currentTarget.value = ''; }} placeholder="請輸入你的電子郵箱" autoComplete="off" className="w-full p-3 pr-10 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-lg outline-none focus:border-emerald-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" />
+              </div>
+              <label className="block text-gray-700 dark:text-slate-300 font-bold mt-4 mb-2">後台密碼</label>
+              <div className="relative">
+                <Lock className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input type="password" name="admin-login-password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="如使用密碼登入，請輸入後台密碼" autoComplete="current-password" className="w-full p-3 pr-10 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-lg outline-none focus:border-emerald-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" />
+              </div>
+              {loginError && <p className="text-red-600 font-bold mt-3 text-sm">{loginError}</p>}
+              {loginMessage && <p className="text-emerald-700 dark:text-emerald-300 font-bold mt-3 text-sm">{loginMessage}</p>}
+              <button type="submit" disabled={loggingIn} className="w-full mt-6 bg-emerald-700 text-white py-3 rounded-xl text-xl font-bold hover:bg-emerald-800 transition shadow-md disabled:opacity-50 flex items-center justify-center gap-2">
+                {loggingIn && <Loader2 className="w-5 h-5 animate-spin" />}
+                {passwordInput ? '密碼登入' : '寄出登入連結'}
+              </button>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-3 text-center">系統會寄出一次性登入連結，10 分鐘內有效。</p>
+            </form>
+          )}
+        </div>
       </div>
     );
   }
@@ -171,8 +238,8 @@ export default function AdminHomePage() {
       <div className="max-w-3xl mx-auto">
         <header className="mb-8 border-b-2 border-emerald-700 dark:border-emerald-600 pb-4 flex flex-row justify-between items-center gap-2">
           <h1 className="text-xl sm:text-3xl font-bold text-emerald-900 dark:text-emerald-400 flex items-center gap-2 sm:gap-3">
-            <BookOpen className="w-6 h-6 sm:w-9 sm:h-9 text-emerald-700 dark:text-emerald-400 shrink-0" />
-            <span>作者後台</span>
+            <UserRound className="w-6 h-6 sm:w-9 sm:h-9 text-emerald-700 dark:text-emerald-400 shrink-0" />
+            <span>會員登入</span>
           </h1>
           <button
             onClick={handleLogout}
@@ -354,5 +421,22 @@ export default function AdminHomePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function AdminHomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FDFBF7] dark:bg-slate-950 flex items-center justify-center">
+          <div className="flex items-center gap-3 text-emerald-800 dark:text-emerald-400 text-2xl font-bold">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            載入中...
+          </div>
+        </div>
+      }
+    >
+      <AdminHomeContent />
+    </Suspense>
   );
 }

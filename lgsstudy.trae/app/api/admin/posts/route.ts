@@ -36,7 +36,8 @@ async function resolveImage(
   form: FormData,
   existing: string | null,
 ): Promise<
-  { ok: true; imageUrl: string | null } | { ok: false; error: string; status: number }
+  | { ok: true; imageUrl: string | null }
+  | { ok: false; error: string; status: number }
 > {
   const imageUrlInput = String(form.get("imageUrl") || "").trim();
   const imageFile = form.get("image");
@@ -44,7 +45,11 @@ async function resolveImage(
   if (imageFile && imageFile instanceof File && imageFile.size > 0) {
     const ext = ALLOWED_IMAGE_TYPES[imageFile.type];
     if (!ext) {
-      return { ok: false, error: "只接受 JPG、PNG、GIF 或 WebP 格式的圖片", status: 400 };
+      return {
+        ok: false,
+        error: "只接受 JPG、PNG、GIF 或 WebP 格式的圖片",
+        status: 400,
+      };
     }
     if (imageFile.size > MAX_IMAGE_BYTES) {
       return { ok: false, error: "圖片檔案不可超過 5MB", status: 400 };
@@ -73,7 +78,11 @@ async function resolveImage(
 
   if (imageUrlInput) {
     if (!/^https?:\/\//i.test(imageUrlInput)) {
-      return { ok: false, error: "圖片網址必須以 http:// 或 https:// 開頭", status: 400 };
+      return {
+        ok: false,
+        error: "圖片網址必須以 http:// 或 https:// 開頭",
+        status: 400,
+      };
     }
     return { ok: true, imageUrl: imageUrlInput };
   }
@@ -84,13 +93,19 @@ async function resolveImage(
 // 管理員用：取得全部文章（含已軟刪除），供後台管理列表與編輯預載使用
 export async function GET(request: Request) {
   if (!isAdminRequest(request)) {
-    return NextResponse.json({ error: "請先輸入正確密碼登入" }, { status: 401 });
+    return NextResponse.json(
+      { error: "請先輸入正確密碼登入" },
+      { status: 401 },
+    );
   }
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     console.error("❌ DATABASE_URL 未設定於環境變數中！");
-    return NextResponse.json({ error: "DATABASE_URL is missing" }, { status: 500 });
+    return NextResponse.json(
+      { error: "DATABASE_URL is missing" },
+      { status: 500 },
+    );
   }
 
   try {
@@ -129,7 +144,10 @@ export async function GET(request: Request) {
 // 作者後台發布新文章（含可選的圖片網址或圖片檔上傳）
 export async function POST(request: Request) {
   if (!isAdminRequest(request)) {
-    return NextResponse.json({ error: "請先輸入正確密碼登入" }, { status: 401 });
+    return NextResponse.json(
+      { error: "請先輸入正確密碼登入" },
+      { status: 401 },
+    );
   }
 
   let form: FormData;
@@ -158,13 +176,19 @@ export async function POST(request: Request) {
 
   const imageResult = await resolveImage(form, null);
   if (!imageResult.ok) {
-    return NextResponse.json({ error: imageResult.error }, { status: imageResult.status });
+    return NextResponse.json(
+      { error: imageResult.error },
+      { status: imageResult.status },
+    );
   }
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     console.error("❌ DATABASE_URL 未設定於環境變數中！");
-    return NextResponse.json({ error: "DATABASE_URL is missing" }, { status: 500 });
+    return NextResponse.json(
+      { error: "DATABASE_URL is missing" },
+      { status: 500 },
+    );
   }
 
   try {
@@ -182,7 +206,7 @@ export async function POST(request: Request) {
     `,
     );
 
-    const newId = result[0]?.id ?? null;
+    const newId = typeof result[0]?.id === "number" ? result[0].id : null;
 
     // 只有當發布日期是今天或更早（香港時區），才立即寄發新文章通知
     // 排程中的文章（未來日期）等到讀者可見那天不會自動補寄，
@@ -200,7 +224,7 @@ export async function POST(request: Request) {
           imageUrl: imageResult.imageUrl,
           postUrl: `${siteUrl}/?postId=${newId}`,
           siteUrl,
-        }).catch((err) => console.error('newsletter after() error:', err)),
+        }).catch((err) => console.error("newsletter after() error:", err)),
       );
     }
 
@@ -221,7 +245,10 @@ export async function POST(request: Request) {
 // 修改既有文章（含可選的替換配圖；沒給新圖時沿用原圖）
 export async function PUT(request: Request) {
   if (!isAdminRequest(request)) {
-    return NextResponse.json({ error: "請先輸入正確密碼登入" }, { status: 401 });
+    return NextResponse.json(
+      { error: "請先輸入正確密碼登入" },
+      { status: 401 },
+    );
   }
 
   let form: FormData;
@@ -237,7 +264,10 @@ export async function PUT(request: Request) {
 
   const postId = Number(form.get("id"));
   if (!Number.isInteger(postId)) {
-    return NextResponse.json({ error: "有效的文章 id 為必填欄位" }, { status: 400 });
+    return NextResponse.json(
+      { error: "有效的文章 id 為必填欄位" },
+      { status: 400 },
+    );
   }
 
   const title = String(form.get("title") || "").trim();
@@ -256,13 +286,19 @@ export async function PUT(request: Request) {
 
   const imageResult = await resolveImage(form, existingImage);
   if (!imageResult.ok) {
-    return NextResponse.json({ error: imageResult.error }, { status: imageResult.status });
+    return NextResponse.json(
+      { error: imageResult.error },
+      { status: imageResult.status },
+    );
   }
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     console.error("❌ DATABASE_URL 未設定於環境變數中！");
-    return NextResponse.json({ error: "DATABASE_URL is missing" }, { status: 500 });
+    return NextResponse.json(
+      { error: "DATABASE_URL is missing" },
+      { status: 500 },
+    );
   }
 
   try {
@@ -285,11 +321,18 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "找不到該篇文章" }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, id: postId, image_url: imageResult.imageUrl });
+    return NextResponse.json({
+      ok: true,
+      id: postId,
+      image_url: imageResult.imageUrl,
+    });
   } catch (error) {
     console.error("❌ 文章更新失敗:", error);
     return NextResponse.json(
-      { error: "目前連到資料庫的網路不穩，系統已自動重試數次仍未成功，請稍候一會再按一次儲存（已填內容不會遺失）" },
+      {
+        error:
+          "目前連到資料庫的網路不穩，系統已自動重試數次仍未成功，請稍候一會再按一次儲存（已填內容不會遺失）",
+      },
       { status: 500 },
     );
   }
@@ -301,7 +344,10 @@ export async function PUT(request: Request) {
 // - "pin" / "unpin"：切換置頂（可同時置頂多篇）
 export async function PATCH(request: Request) {
   if (!isAdminRequest(request)) {
-    return NextResponse.json({ error: "請先輸入正確密碼登入" }, { status: 401 });
+    return NextResponse.json(
+      { error: "請先輸入正確密碼登入" },
+      { status: 401 },
+    );
   }
 
   let body: { id?: unknown; action?: unknown };
@@ -313,7 +359,10 @@ export async function PATCH(request: Request) {
 
   const postId = Number(body?.id);
   if (!Number.isInteger(postId)) {
-    return NextResponse.json({ error: "有效的文章 id 為必填欄位" }, { status: 400 });
+    return NextResponse.json(
+      { error: "有效的文章 id 為必填欄位" },
+      { status: 400 },
+    );
   }
 
   const action = body?.action;
@@ -332,7 +381,10 @@ export async function PATCH(request: Request) {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     console.error("❌ DATABASE_URL 未設定於環境變數中！");
-    return NextResponse.json({ error: "DATABASE_URL is missing" }, { status: 500 });
+    return NextResponse.json(
+      { error: "DATABASE_URL is missing" },
+      { status: 500 },
+    );
   }
 
   try {
@@ -401,7 +453,10 @@ export async function PATCH(request: Request) {
 // 外部網址圖片（http(s)://）不屬於本站檔案，無法刪除。
 export async function DELETE(request: Request) {
   if (!isAdminRequest(request)) {
-    return NextResponse.json({ error: "請先輸入正確密碼登入" }, { status: 401 });
+    return NextResponse.json(
+      { error: "請先輸入正確密碼登入" },
+      { status: 401 },
+    );
   }
 
   let body: { id?: unknown };
@@ -413,13 +468,19 @@ export async function DELETE(request: Request) {
 
   const postId = Number(body?.id);
   if (!Number.isInteger(postId)) {
-    return NextResponse.json({ error: "有效的文章 id 為必填欄位" }, { status: 400 });
+    return NextResponse.json(
+      { error: "有效的文章 id 為必填欄位" },
+      { status: 400 },
+    );
   }
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     console.error("❌ DATABASE_URL 未設定於環境變數中！");
-    return NextResponse.json({ error: "DATABASE_URL is missing" }, { status: 500 });
+    return NextResponse.json(
+      { error: "DATABASE_URL is missing" },
+      { status: 500 },
+    );
   }
 
   try {
@@ -448,14 +509,18 @@ export async function DELETE(request: Request) {
         { status: 404 },
       );
     }
-    const imageUrl: string | null = result[0].image_url ?? null;
+    const imageUrl: string | null =
+      typeof result[0].image_url === "string" ? result[0].image_url : null;
     // 盡量清除本機上傳的配圖（外部網址圖片跳過；清除失敗不影響刪除結果）
     if (imageUrl && imageUrl.startsWith("/uploads/")) {
       const safePart = path.basename(imageUrl); // 防止路徑穿越
       try {
         await unlink(path.join(process.cwd(), "public", "uploads", safePart));
       } catch (error) {
-        console.warn("⚠️ 徹底刪除文章時配圖檔未能移除（可能早已不存在）:", error);
+        console.warn(
+          "⚠️ 徹底刪除文章時配圖檔未能移除（可能早已不存在）:",
+          error,
+        );
       }
     }
 

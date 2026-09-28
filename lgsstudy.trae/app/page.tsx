@@ -4,9 +4,9 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { Heart, ThumbsDown, MessageSquare, Search, Filter, Calendar, Tag, Loader2, Sun, Moon, Eye, LayoutDashboard, LogIn, Share2, Link2, Check, ChevronLeft, ChevronRight, Clock, CornerDownRight, Pin, Sparkles, Flame, Bookmark } from 'lucide-react';
-import { formatCommentDate, estimateReadingTime, renderScripture, splitCategories } from '@/lib/reader-utils';
-import { useReaderPage } from '@/hooks/useReaderPage';
+import { Heart, ThumbsDown, MessageSquare, Search, Filter, Calendar, Tag, Loader2, Sun, Moon, Eye, UserRound, Share2, Link2, Check, ChevronLeft, ChevronRight, Clock, CornerDownRight, Pin, Sparkles, Flame, Bookmark } from 'lucide-react';
+import { ChineseDateFilter, formatCommentDate, estimateReadingTime, renderScripture, splitCategories } from '@/lib/reader-utils';
+import { useReaderPage, type SortBy } from '@/hooks/useReaderPage';
 
 export default function HomePage() {
   const router = useRouter();
@@ -69,7 +69,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FDFBF7] dark:bg-slate-950 text-[#222222] dark:text-slate-100 font-sans p-4 md:p-8 max-w-7xl mx-auto transition-colors">
+    <main className="min-h-screen bg-[#FDFBF7] dark:bg-slate-950 text-[#222222] dark:text-slate-100 font-sans p-4 md:p-6 max-w-[1440px] mx-auto transition-colors">
 
       {/* 頂部 Header：Logo — 標題 — 登入按鈕，標題在兩者之間置中 */}
       <header className="mb-6 md:mb-8 border-b-2 border-emerald-700 dark:border-emerald-600 pb-4 flex flex-row items-center gap-2 sm:gap-3">
@@ -79,7 +79,7 @@ export default function HomePage() {
             <img
               src={theme === 'dark' ? '/images/lgsDark.png' : '/images/lgsLight.png'}
               alt="樂研集 lgscns"
-              className="h-9 sm:h-12 w-auto rounded-lg border border-emerald-800/15 dark:border-slate-700 shrink-0"
+              className="h-12 sm:h-12 w-auto rounded-lg border border-emerald-800/15 dark:border-slate-700 shrink-0"
             />
           )}
         </div>
@@ -94,23 +94,23 @@ export default function HomePage() {
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {isAdmin ? (
               <button
-                onClick={() => router.push('/admin')}
+                onClick={() => router.push('/admin?from=%2F')}
                 title="返回作者後台"
                 aria-label="返回作者後台"
                 className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs sm:text-base hover:bg-emerald-800 transition shadow-sm border border-emerald-800 dark:border-emerald-500"
               >
-                <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>登入</span>
+                <UserRound className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>註冊/ 登入</span>
               </button>
             ) : (
               <button
-                onClick={() => router.push('/admin')}
-                title="登入作者後台"
-                aria-label="登入作者後台"
+                onClick={() => router.push('/admin?from=%2F')}
+                title="登入會員後台"
+                aria-label="登入會員後台"
                 className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs sm:text-base hover:bg-emerald-800 transition shadow-sm border border-emerald-800 dark:border-emerald-500"
               >
-                <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>登入</span>
+                <UserRound className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>註冊/ 登入</span>
               </button>
             )}
             <button
@@ -174,7 +174,7 @@ export default function HomePage() {
                 <img
                   src={selectedPost.image_url}
                   alt={selectedPost.title}
-                  className="w-full max-h-[420px] object-cover rounded-2xl shadow-md border border-gray-200 dark:border-slate-700"
+                  className="w-full h-auto object-contain rounded-2xl shadow-md border border-gray-200 dark:border-slate-700"
                 />
               </div>
             )}
@@ -260,13 +260,13 @@ export default function HomePage() {
               <span className="text-xs sm:text-lg font-bold">{selectedPost.dislike_count || 0} 有待改善</span>
             </button>
 
-            <button
-              onClick={() => router.push(`/respond?postId=${selectedPost.id}`)}
-              className="flex flex-col items-center gap-1 text-blue-700 dark:text-blue-400 hover:scale-105 transition p-2 sm:p-3 px-3 sm:px-6 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800"
+            <div
+              aria-label={`回應數 ${selectedPost.comment_count || 0}`}
+              className="flex flex-col items-center gap-1 text-blue-700 dark:text-blue-400 p-2 sm:p-3 px-3 sm:px-6"
             >
               <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8" />
               <span className="text-xs sm:text-lg font-bold">回應 ({selectedPost.comment_count || 0})</span>
-            </button>
+            </div>
           </div>
 
           {/* 分享列：WhatsApp 教會群組分享 ／ 複製連結 */}
@@ -469,7 +469,7 @@ export default function HomePage() {
         <aside className="lg:col-span-5 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl shadow-md border border-gray-200 dark:border-slate-800 transition-colors">
           <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4 pb-2 border-b dark:border-slate-800 flex items-center gap-2">
             <Search className="w-6 h-6 text-emerald-700 dark:text-emerald-400" />
-            歷史靈修搜尋
+            歷史文章搜尋
           </h2>
 
           {/* 🔍 搜尋與篩選控制區 */}
@@ -531,7 +531,7 @@ export default function HomePage() {
               </label>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as SortBy)}
                 className="w-full p-2 sm:p-3 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-base sm:text-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-emerald-600 dark:focus:border-emerald-500 font-medium"
               >
                 <option value="date">按發布日期 (最新在前)</option>
@@ -545,15 +545,10 @@ export default function HomePage() {
             <div>
               <label className="block text-gray-700 dark:text-slate-300 font-bold mb-1.5 text-base sm:text-lg flex items-center gap-1">
                 <Calendar className="w-5 h-5 text-amber-800 dark:text-amber-400" />
-                按指定日期搜尋：
+                搜尋指定日期：
               </label>
               <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full p-2 sm:p-2.5 border-2 border-gray-300 dark:border-slate-600 rounded-xl text-base sm:text-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-emerald-600 dark:focus:border-emerald-500"
-                />
+                <ChineseDateFilter value={selectedDate} onChange={setSelectedDate} />
                 {selectedDate && (
                   <button
                     onClick={() => setSelectedDate('')}
@@ -563,6 +558,9 @@ export default function HomePage() {
                   </button>
                 )}
               </div>
+              <p className="mt-1.5 text-sm sm:text-base text-gray-500 dark:text-slate-400">
+                請選擇年份、月份和日期
+              </p>
             </div>
 
           </div>

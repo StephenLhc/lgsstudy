@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  BookOpen,
+  UserRound,
   LogOut,
   Loader2,
   ArrowLeft,
@@ -167,7 +167,7 @@ export default function AdminTrashPage() {
         {/* 頂部列 */}
         <header className="mb-6 border-b-2 border-emerald-700 dark:border-emerald-600 pb-4 flex flex-row justify-between items-center gap-2">
           <h1 className="text-xl sm:text-3xl font-bold text-emerald-900 dark:text-emerald-400 flex items-center gap-2 sm:gap-3">
-            <BookOpen className="w-6 h-6 sm:w-9 sm:h-9 text-emerald-700 dark:text-emerald-400 shrink-0" />
+            <UserRound className="w-6 h-6 sm:w-9 sm:h-9 text-emerald-700 dark:text-emerald-400 shrink-0" />
             <span className="flex items-center gap-2">
               <Trash2 className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500 dark:text-slate-400" />
               回收站

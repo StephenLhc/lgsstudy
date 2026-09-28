@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  BookOpen,
+  UserRound,
   LogOut,
   Loader2,
   ArrowLeft,
@@ -203,8 +203,8 @@ export default function AdminManagePage() {
         {/* 頂部列 */}
         <header className="mb-6 border-b-2 border-emerald-700 dark:border-emerald-600 pb-4 flex flex-row justify-between items-center gap-2">
           <h1 className="text-xl sm:text-3xl font-bold text-emerald-900 dark:text-emerald-400 flex items-center gap-2 sm:gap-3">
-            <BookOpen className="w-6 h-6 sm:w-9 sm:h-9 text-emerald-700 dark:text-emerald-400 shrink-0" />
-            <span>作者後台 · 管理文章</span>
+            <UserRound className="w-6 h-6 sm:w-9 sm:h-9 text-emerald-700 dark:text-emerald-400 shrink-0" />
+            <span>會員登入 · 管理文章</span>
           </h1>
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
             <button
@@ -267,13 +267,12 @@ export default function AdminManagePage() {
             {posts.map((post) => (
               <li
                 key={post.id}
-                className={`bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border-2 transition ${
-                  post.is_deleted
+                className={`bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border-2 transition ${post.is_deleted
                     ? 'border-gray-300 dark:border-slate-700 opacity-70'
                     : post.is_pinned
                       ? 'border-amber-400 dark:border-amber-500'
                       : 'border-gray-200 dark:border-slate-800'
-                }`}
+                  }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -299,10 +298,10 @@ export default function AdminManagePage() {
                         const dd = String(hkDate.getDate()).padStart(2, '0');
                         return `${yyyy}-${mm}-${dd}`;
                       })() && (
-                        <span className="bg-sky-100 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 font-bold px-2.5 py-0.5 rounded-full text-xs flex items-center gap-1 border border-sky-300 dark:border-sky-700">
-                          🕐 排程中（{post.post_date?.slice(5, 10)} 發布）
-                        </span>
-                      )}
+                          <span className="bg-sky-100 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 font-bold px-2.5 py-0.5 rounded-full text-xs flex items-center gap-1 border border-sky-300 dark:border-sky-700">
+                            🕐 排程中（{post.post_date?.slice(5, 10)} 發布）
+                          </span>
+                        )}
                       {post.is_deleted && (
                         <span className="bg-gray-600 text-white font-bold px-2.5 py-0.5 rounded-full text-xs flex items-center gap-1">
                           <Trash2 className="w-3 h-3" />
@@ -312,11 +311,10 @@ export default function AdminManagePage() {
                     </div>
 
                     <h2
-                      className={`text-lg sm:text-xl font-bold leading-snug ${
-                        post.is_deleted
+                      className={`text-lg sm:text-xl font-bold leading-snug ${post.is_deleted
                           ? 'text-gray-500 dark:text-slate-400 line-through'
                           : 'text-slate-900 dark:text-slate-100'
-                      }`}
+                        }`}
                     >
                       {post.title}
                     </h2>
@@ -347,11 +345,10 @@ export default function AdminManagePage() {
                         onClick={() => togglePinned(post)}
                         disabled={busyId === post.id}
                         title={post.is_pinned ? '取消置頂，恢復按日期排序' : '置頂於文章列表最前面'}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-sm border transition disabled:opacity-50 ${
-                          post.is_pinned
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-sm border transition disabled:opacity-50 ${post.is_pinned
                             ? 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600'
                             : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:opacity-80'
-                        }`}
+                          }`}
                       >
                         {busyId === post.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />

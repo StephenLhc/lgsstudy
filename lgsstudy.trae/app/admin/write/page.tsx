@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  BookOpen,
+  UserRound,
   LogOut,
   UploadCloud,
   Link2,
@@ -103,11 +103,11 @@ function draftHasContent(d: DraftData | null): boolean {
   if (!d) return false;
   return Boolean(
     d.title.trim() ||
-      d.scriptureA.trim() ||
-      d.scriptureB.trim() ||
-      d.content.trim() ||
-      d.imageUrl.trim() ||
-      d.imageFileName,
+    d.scriptureA.trim() ||
+    d.scriptureB.trim() ||
+    d.content.trim() ||
+    d.imageUrl.trim() ||
+    d.imageFileName,
   );
 }
 
@@ -293,11 +293,8 @@ function WriteEditor() {
 
   // 每輪渲染更新最新值，提供 30 秒定時器與 beforeunload 兜底使用（避免閉包抓到舊值）
   const latestFpRef = useRef('');
-  latestFpRef.current = currentFingerprint();
   const buildDraftRef = useRef(buildDraft);
-  buildDraftRef.current = buildDraft;
   const showSuccessRef = useRef(showSuccess);
-  showSuccessRef.current = showSuccess;
 
   // 立即把草稿寫入 localStorage（空白表單則移除草稿）
   const persistDraftNow = (): boolean => {
@@ -321,7 +318,12 @@ function WriteEditor() {
     }
   };
   const persistDraftRef = useRef(persistDraftNow);
-  persistDraftRef.current = persistDraftNow;
+  useEffect(() => {
+    latestFpRef.current = currentFingerprint();
+    buildDraftRef.current = buildDraft;
+    showSuccessRef.current = showSuccess;
+    persistDraftRef.current = persistDraftNow;
+  }, [buildDraft, currentFingerprint, persistDraftNow, showSuccess]);
 
   // 文章欄位載入完成後比對舊草稿：與已發布內容相同就清掉，不同才提示還原
   const initDraftCheck = (baseline: DraftFpInput) => {
@@ -407,11 +409,11 @@ function WriteEditor() {
   // 手動「立即儲存」按鈕是否可用：表單完全空白時不用存
   const hasDraftContentNow = Boolean(
     title.trim() ||
-      scriptureA.trim() ||
-      scriptureB.trim() ||
-      content.trim() ||
-      imageUrl.trim() ||
-      imageFile,
+    scriptureA.trim() ||
+    scriptureB.trim() ||
+    content.trim() ||
+    imageUrl.trim() ||
+    imageFile,
   );
 
   // 開啟頁面時檢查是否已登入（未登入跳回 /admin）；
@@ -879,9 +881,9 @@ function WriteEditor() {
         {/* 頂部列 */}
         <header className="mb-6 border-b-2 border-emerald-700 dark:border-emerald-600 pb-4 flex flex-row justify-between items-center gap-2">
           <h1 className="text-xl sm:text-3xl font-bold text-emerald-900 dark:text-emerald-400 flex items-center gap-2 sm:gap-3">
-            <BookOpen className="w-6 h-6 sm:w-9 sm:h-9 text-emerald-700 dark:text-emerald-400 shrink-0" />
+            <UserRound className="w-6 h-6 sm:w-9 sm:h-9 text-emerald-700 dark:text-emerald-400 shrink-0" />
             <span>
-              作者後台 · {isEdit ? '修改文章' : '撰寫新文章'}
+              會員登入 · {isEdit ? '修改文章' : '撰寫新文章'}
             </span>
           </h1>
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
@@ -1054,11 +1056,10 @@ function WriteEditor() {
                         key={c}
                         type="button"
                         onClick={() => toggleCategory(c)}
-                        className={`px-3 py-1.5 rounded-full font-bold text-sm border-2 transition ${
-                          selected
-                            ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                            : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 border-gray-300 dark:border-slate-600 hover:border-emerald-500'
-                        }`}
+                        className={`px-3 py-1.5 rounded-full font-bold text-sm border-2 transition ${selected
+                          ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                          : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 border-gray-300 dark:border-slate-600 hover:border-emerald-500'
+                          }`}
                       >
                         {c}
                       </button>
@@ -1107,11 +1108,10 @@ function WriteEditor() {
                         }}
                         placeholder="輸入新分類名稱（不可與現有分類重複）"
                         autoFocus
-                        className={`flex-1 p-2 border-2 rounded-lg text-base outline-none bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 ${
-                          categoryError
-                            ? 'border-red-400 focus:border-red-500'
-                            : 'border-gray-300 dark:border-slate-600 focus:border-emerald-600 dark:focus:border-emerald-500'
-                        }`}
+                        className={`flex-1 p-2 border-2 rounded-lg text-base outline-none bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 ${categoryError
+                          ? 'border-red-400 focus:border-red-500'
+                          : 'border-gray-300 dark:border-slate-600 focus:border-emerald-600 dark:focus:border-emerald-500'
+                          }`}
                       />
                       <button
                         type="button"
@@ -1226,11 +1226,10 @@ function WriteEditor() {
                             key={book}
                             type="button"
                             onClick={() => handleSelectBook(book)}
-                            className={`px-2 py-1 rounded-lg text-xs font-bold text-left transition truncate border ${
-                              pickerBook === book
-                                ? 'bg-amber-600 text-white border-amber-600'
-                                : 'text-gray-700 dark:text-slate-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60 hover:bg-amber-100 dark:hover:bg-amber-900/40'
-                            }`}
+                            className={`px-2 py-1 rounded-lg text-xs font-bold text-left transition truncate border ${pickerBook === book
+                              ? 'bg-amber-600 text-white border-amber-600'
+                              : 'text-gray-700 dark:text-slate-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60 hover:bg-amber-100 dark:hover:bg-amber-900/40'
+                              }`}
                           >
                             {book}
                           </button>
@@ -1243,11 +1242,10 @@ function WriteEditor() {
                             key={book}
                             type="button"
                             onClick={() => handleSelectBook(book)}
-                            className={`px-2 py-1 rounded-lg text-xs font-bold text-left transition truncate border ${
-                              pickerBook === book
-                                ? 'bg-blue-600 text-white border-blue-600'
-                                : 'text-gray-700 dark:text-slate-300 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 dark:hover:bg-blue-900/40'
-                            }`}
+                            className={`px-2 py-1 rounded-lg text-xs font-bold text-left transition truncate border ${pickerBook === book
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'text-gray-700 dark:text-slate-300 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+                              }`}
                           >
                             {book}
                           </button>
@@ -1267,11 +1265,10 @@ function WriteEditor() {
                               key={ch}
                               type="button"
                               onClick={() => handleSelectStartChapter(ch)}
-                              className={`h-8 flex items-center justify-center rounded-md text-xs font-bold transition border ${
-                                pickerStartChapter === ch
-                                  ? 'bg-emerald-600 text-white border-emerald-600'
-                                  : 'text-gray-700 dark:text-slate-200 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-600 hover:text-white'
-                              }`}
+                              className={`h-8 flex items-center justify-center rounded-md text-xs font-bold transition border ${pickerStartChapter === ch
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : 'text-gray-700 dark:text-slate-200 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-600 hover:text-white'
+                                }`}
                             >
                               {ch}
                             </button>
@@ -1300,11 +1297,10 @@ function WriteEditor() {
                               key={v}
                               type="button"
                               onClick={() => handleSelectStartVerse(v)}
-                              className={`h-8 flex items-center justify-center rounded-md text-xs font-bold transition border ${
-                                pickerStartVerse === v
-                                  ? 'bg-emerald-600 text-white border-emerald-600'
-                                  : 'text-gray-700 dark:text-slate-200 bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
-                              }`}
+                              className={`h-8 flex items-center justify-center rounded-md text-xs font-bold transition border ${pickerStartVerse === v
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : 'text-gray-700 dark:text-slate-200 bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
+                                }`}
                             >
                               {v}
                             </button>
@@ -1328,13 +1324,12 @@ function WriteEditor() {
                                 type="button"
                                 disabled={disabled}
                                 onClick={() => handleSelectEndChapter(ch)}
-                                className={`h-8 flex items-center justify-center rounded-md text-xs font-bold transition border ${
-                                  disabled
-                                    ? 'text-gray-300 dark:text-slate-600 bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-800 cursor-not-allowed'
-                                    : pickerEndChapter === ch
-                                      ? 'bg-emerald-600 text-white border-emerald-600'
-                                      : 'text-gray-700 dark:text-slate-200 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-600 hover:text-white'
-                                }`}
+                                className={`h-8 flex items-center justify-center rounded-md text-xs font-bold transition border ${disabled
+                                  ? 'text-gray-300 dark:text-slate-600 bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-800 cursor-not-allowed'
+                                  : pickerEndChapter === ch
+                                    ? 'bg-emerald-600 text-white border-emerald-600'
+                                    : 'text-gray-700 dark:text-slate-200 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-600 hover:text-white'
+                                  }`}
                               >
                                 {ch}
                               </button>
@@ -1363,13 +1358,12 @@ function WriteEditor() {
                                 type="button"
                                 disabled={disabled}
                                 onClick={() => handleSelectEndVerse(v)}
-                                className={`h-8 flex items-center justify-center rounded-md text-xs font-bold transition border ${
-                                  disabled
-                                    ? 'text-gray-300 dark:text-slate-600 bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-800 cursor-not-allowed'
-                                    : sameChapter && pickerStartVerse === v
-                                      ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 border-emerald-400 dark:border-emerald-700 hover:bg-emerald-600 hover:text-white'
-                                      : 'text-gray-700 dark:text-slate-200 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-600 hover:text-white'
-                                }`}
+                                className={`h-8 flex items-center justify-center rounded-md text-xs font-bold transition border ${disabled
+                                  ? 'text-gray-300 dark:text-slate-600 bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-800 cursor-not-allowed'
+                                  : sameChapter && pickerStartVerse === v
+                                    ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 border-emerald-400 dark:border-emerald-700 hover:bg-emerald-600 hover:text-white'
+                                    : 'text-gray-700 dark:text-slate-200 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-600 hover:text-white'
+                                  }`}
                               >
                                 {v}
                               </button>
@@ -1401,11 +1395,10 @@ function WriteEditor() {
                 <button
                   type="button"
                   onClick={() => setImageMode('url')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-sm border-2 transition ${
-                    imageMode === 'url'
-                      ? 'bg-emerald-700 text-white border-emerald-700'
-                      : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 border-gray-300 dark:border-slate-600'
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-sm border-2 transition ${imageMode === 'url'
+                    ? 'bg-emerald-700 text-white border-emerald-700'
+                    : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 border-gray-300 dark:border-slate-600'
+                    }`}
                 >
                   <Link2 className="w-4 h-4" />
                   貼圖片網址
@@ -1413,11 +1406,10 @@ function WriteEditor() {
                 <button
                   type="button"
                   onClick={() => setImageMode('upload')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-sm border-2 transition ${
-                    imageMode === 'upload'
-                      ? 'bg-emerald-700 text-white border-emerald-700'
-                      : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 border-gray-300 dark:border-slate-600'
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-sm border-2 transition ${imageMode === 'upload'
+                    ? 'bg-emerald-700 text-white border-emerald-700'
+                    : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 border-gray-300 dark:border-slate-600'
+                    }`}
                 >
                   <UploadCloud className="w-4 h-4" />
                   上傳圖片檔

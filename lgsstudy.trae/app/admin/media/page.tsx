@@ -126,7 +126,7 @@ export default function MediaLibraryPage() {
       await navigator.clipboard.writeText(url);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 1500);
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -152,22 +152,20 @@ export default function MediaLibraryPage() {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setTab('images')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition ${
-              tab === 'images'
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition ${tab === 'images'
                 ? 'bg-emerald-700 text-white shadow'
                 : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-700 hover:border-emerald-500'
-            }`}
+              }`}
           >
             <Image className="w-4 h-4" />
             圖片
           </button>
           <button
             onClick={() => setTab('videos')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition ${
-              tab === 'videos'
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition ${tab === 'videos'
                 ? 'bg-emerald-700 text-white shadow'
                 : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-700 hover:border-emerald-500'
-            }`}
+              }`}
           >
             <Video className="w-4 h-4" />
             視頻（預備）
@@ -246,7 +244,7 @@ export default function MediaLibraryPage() {
                     <img
                       src={item.url}
                       alt={item.original_name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       loading="lazy"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
@@ -301,11 +299,10 @@ export default function MediaLibraryPage() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 px-4 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 font-bold ${
-            toast.type === 'success'
+          className={`fixed bottom-6 right-6 px-4 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 font-bold ${toast.type === 'success'
               ? 'bg-emerald-700 text-white'
               : 'bg-red-600 text-white'
-          }`}
+            }`}
         >
           {toast.type === 'success' ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
           {toast.msg}

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  BookOpen,
   LogOut,
   Loader2,
   ArrowLeft,
@@ -140,8 +139,10 @@ export default function AdminCommentsPage() {
 
   useEffect(() => {
     if (ready) {
-      loadList(tab);
-      loadCounts();
+      queueMicrotask(() => {
+        loadList(tab);
+        loadCounts();
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, tab]);
@@ -184,9 +185,8 @@ export default function AdminCommentsPage() {
       applyUpdated(updated);
       setNotice(
         next === 'approved'
-          ? `已通過 ${comment.user_name}${comment.salutation}的回應${
-              comment.is_public ? '，讀者現在可於文章下方看到' : '（該回應為「僅供作者閱讀」，不會公開顯示）'
-            }`
+          ? `已通過 ${comment.user_name}${comment.salutation}的回應${comment.is_public ? '，讀者現在可於文章下方看到' : '（該回應為「僅供作者閱讀」，不會公開顯示）'
+          }`
           : '已駁回該回應，讀者不會看到',
       );
     } catch {
@@ -303,22 +303,20 @@ export default function AdminCommentsPage() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`px-4 py-2 rounded-full font-bold text-sm border-2 transition flex items-center gap-1.5 ${
-                  active
-                    ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                    : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 border-gray-300 dark:border-slate-600 hover:border-emerald-500'
-                }`}
+                className={`px-4 py-2 rounded-full font-bold text-sm border-2 transition flex items-center gap-1.5 ${active
+                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                  : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-300 border-gray-300 dark:border-slate-600 hover:border-emerald-500'
+                  }`}
               >
                 {t.label}
                 {n !== null && (
                   <span
-                    className={`min-w-[22px] h-[22px] px-1 rounded-full text-xs font-bold flex items-center justify-center ${
-                      active
-                        ? 'bg-white/25 text-white'
-                        : isPendingTab && n > 0
-                          ? 'bg-red-600 text-white'
-                          : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'
-                    }`}
+                    className={`min-w-[22px] h-[22px] px-1 rounded-full text-xs font-bold flex items-center justify-center ${active
+                      ? 'bg-white/25 text-white'
+                      : isPendingTab && n > 0
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'
+                      }`}
                   >
                     {n}
                   </span>
@@ -370,13 +368,12 @@ export default function AdminCommentsPage() {
               return (
                 <article
                   key={c.id}
-                  className={`bg-white dark:bg-slate-900 rounded-2xl shadow-md border-2 p-4 sm:p-6 ${
-                    c.status === 'pending'
-                      ? 'border-amber-300 dark:border-amber-700'
-                      : c.status === 'rejected'
-                        ? 'border-red-200 dark:border-red-900/60 opacity-90'
-                        : 'border-gray-200 dark:border-slate-800'
-                  }`}
+                  className={`bg-white dark:bg-slate-900 rounded-2xl shadow-md border-2 p-4 sm:p-6 ${c.status === 'pending'
+                    ? 'border-amber-300 dark:border-amber-700'
+                    : c.status === 'rejected'
+                      ? 'border-red-200 dark:border-red-900/60 opacity-90'
+                      : 'border-gray-200 dark:border-slate-800'
+                    }`}
                 >
                   {/* 頭部：文章／狀態／時間 */}
                   <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm mb-3">
@@ -393,22 +390,20 @@ export default function AdminCommentsPage() {
                       </span>
                     )}
                     <span
-                      className={`px-2 py-0.5 rounded-full font-bold ${
-                        c.status === 'pending'
-                          ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300'
-                          : c.status === 'approved'
-                            ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300'
-                            : 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300'
-                      }`}
+                      className={`px-2 py-0.5 rounded-full font-bold ${c.status === 'pending'
+                        ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300'
+                        : c.status === 'approved'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300'
+                          : 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300'
+                        }`}
                     >
                       {c.status === 'pending' ? '待審核' : c.status === 'approved' ? '已通過' : '已駁回'}
                     </span>
                     <span
-                      className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-bold ${
-                        c.is_public
-                          ? 'bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300'
-                          : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400'
-                      }`}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-bold ${c.is_public
+                        ? 'bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300'
+                        : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400'
+                        }`}
                       title={c.is_public ? '回應者同意公開' : '回應者選擇「僅供作者閱讀」'}
                     >
                       {c.is_public ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
